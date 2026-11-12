@@ -1,0 +1,17 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+}
+
+@media print {
+  @page {
+    margin: 0;
+  }
+  body {
+    padding: 1.5cm;
+    background: white !important;
+  }
+}
