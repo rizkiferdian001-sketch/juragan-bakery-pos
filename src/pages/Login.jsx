@@ -40,7 +40,7 @@ export default function Login() {
       <div className="w-full max-w-sm p-6 bg-white border rounded-lg border-slate-200">
         <div className="mb-6 text-center">
           <h1 className="text-xl font-semibold text-slate-900">
-            Juragan<span className="text-blue-600">POS</span>
+            Juragan<span className="text-black-600">POS</span>
           </h1>
           <p className="mt-1 text-sm text-slate-500">
             Masuk untuk mengelola sistem toko

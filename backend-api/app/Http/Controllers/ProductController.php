@@ -8,10 +8,29 @@ use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
 {
+    private function formatProduct($product)
+    {
+        return [
+            'id' => $product->id,
+            'nama_produk' => $product->nama_produk,
+            'kategori' => $product->kategori,
+            'harga' => $product->harga,
+            'stok' => $product->stok,
+            'gambar' => $product->gambar,
+            'gambar_url' => $product->gambar ? asset('storage/' . $product->gambar) : null,
+            'created_at' => $product->created_at,
+            'updated_at' => $product->updated_at,
+        ];
+    }
+
     public function index()
     {
+        $products = Product::latest()->get()->map(function ($product) {
+            return $this->formatProduct($product);
+        });
+
         return response()->json([
-            'data' => Product::latest()->get()
+            'data' => $products
         ]);
     }
 
@@ -33,7 +52,7 @@ class ProductController extends Controller
 
         return response()->json([
             'message' => 'Produk berhasil ditambahkan',
-            'data' => $product
+            'data' => $this->formatProduct($product)
         ], 201);
     }
 
@@ -58,7 +77,7 @@ class ProductController extends Controller
 
         return response()->json([
             'message' => 'Produk berhasil diperbarui',
-            'data' => $product
+            'data' => $this->formatProduct($product)
         ]);
     }
 
@@ -72,7 +91,7 @@ class ProductController extends Controller
 
         return response()->json([
             'message' => "Stok {$product->nama_produk} berhasil ditambah {$validated['jumlah']} pcs",
-            'data' => $product->fresh()
+            'data' => $this->formatProduct($product->fresh())
         ]);
     }
 

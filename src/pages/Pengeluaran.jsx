@@ -86,7 +86,7 @@ export default function Pengeluaran() {
             Pengeluaran Toko
           </h1>
           <p className="text-sm text-slate-500">
-            Catat biaya bahan baku kue, kemasan, dan operasional toko.
+            Pencatatan biaya bahan baku kue, kemasan, dan operasional toko.
           </p>
         </div>
 

@@ -7,8 +7,12 @@ import {
   ShieldCheck,
   MonitorSmartphone,
   ChefHat,
+  Clock,
+  History,
 } from "lucide-react";
 import api from "../services/api";
+import OvertimeModal from "../components/OvertimeModal";
+import OvertimeHistoryModal from "../components/OvertimeHistoryModal";
 
 export default function Karyawan() {
   const [users, setUsers] = useState([]);
@@ -17,6 +21,13 @@ export default function Karyawan() {
   const [errorMsg, setErrorMsg] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
+
+  // State untuk modal lembur & riwayat lembur
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [isOvertimeOpen, setIsOvertimeOpen] = useState(false);
+  const [historyEmployee, setHistoryEmployee] = useState(null);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [overtimeRefreshKey, setOvertimeRefreshKey] = useState(0);
 
   const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
 
@@ -83,6 +94,16 @@ export default function Karyawan() {
       password: "",
     });
     setIsModalOpen(true);
+  };
+
+  const handleOpenOvertime = (emp) => {
+    setSelectedEmployee(emp);
+    setIsOvertimeOpen(true);
+  };
+
+  const handleOpenHistory = (emp) => {
+    setHistoryEmployee(emp);
+    setIsHistoryOpen(true);
   };
 
   const handleSubmit = async (e) => {
@@ -157,10 +178,11 @@ export default function Karyawan() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-xl font-semibold text-slate-900">
-            Kelola Karyawan
+            Data Karyawan
           </h1>
           <p className="text-sm text-slate-500">
-            Kelola data staf toko, gaji bulanan, serta akun akses Admin & Kasir.
+            Kelola data staf toko, gaji bulanan, lemburan, serta akun akses
+            Admin & Kasir.
           </p>
         </div>
 
@@ -221,8 +243,27 @@ export default function Karyawan() {
                     {formatRupiah(item.gaji)}
                   </td>
                   <td className="px-5 py-3.5 text-right">
-                    <div className="inline-flex items-center gap-2">
+                    <div className="inline-flex items-center gap-1.5">
                       <button
+                        type="button"
+                        onClick={() => handleOpenOvertime(item)}
+                        title="Input Lembur"
+                        className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-amber-700 rounded-md bg-amber-50 hover:bg-amber-100 cursor-pointer"
+                      >
+                        <Clock className="w-3.5 h-3.5" />
+                        <span>+ Lembur</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleOpenHistory(item)}
+                        title="Riwayat Lembur"
+                        className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-md text-slate-700 bg-slate-100 hover:bg-slate-200 cursor-pointer"
+                      >
+                        <History className="w-3.5 h-3.5" />
+                        <span>Riwayat</span>
+                      </button>
+                      <button
+                        type="button"
                         onClick={() => handleOpenEdit(item)}
                         title="Edit"
                         className="p-1.5 text-slate-600 rounded-md hover:bg-slate-100 hover:text-blue-600 cursor-pointer"
@@ -231,6 +272,7 @@ export default function Karyawan() {
                       </button>
                       {item.id !== currentUser.id && (
                         <button
+                          type="button"
                           onClick={() => handleDelete(item.id, item.name)}
                           title="Hapus"
                           className="p-1.5 text-slate-600 rounded-md hover:bg-red-50 hover:text-red-600 cursor-pointer"
@@ -403,6 +445,22 @@ export default function Karyawan() {
           </div>
         </div>
       )}
+
+      {/* Modal Input Lembur */}
+      <OvertimeModal
+        isOpen={isOvertimeOpen}
+        onClose={() => setIsOvertimeOpen(false)}
+        employee={selectedEmployee}
+        onSuccess={() => setOvertimeRefreshKey((prev) => prev + 1)}
+      />
+
+      {/* Modal Riwayat & Total Lembur */}
+      <OvertimeHistoryModal
+        isOpen={isHistoryOpen}
+        onClose={() => setIsHistoryOpen(false)}
+        employee={historyEmployee}
+        refreshTrigger={overtimeRefreshKey}
+      />
     </div>
   );
 }

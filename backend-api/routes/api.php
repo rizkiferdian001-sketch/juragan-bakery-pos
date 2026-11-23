@@ -6,6 +6,7 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\TransactionController;
+use App\Http\Controllers\Api\OvertimeController;
 
 // Endpoint publik (tanpa token)
 Route::post('/login', [AuthController::class, 'login']);
@@ -24,9 +25,13 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::apiResource('products', ProductController::class)->except(['index']);
         Route::apiResource('users', UserController::class)->only(['index', 'store', 'update', 'destroy']);
         Route::apiResource('expenses', ExpenseController::class)->only(['index', 'store', 'destroy']);
+        Route::post('/overtimes/settle', [OvertimeController::class, 'settle']);
+        Route::apiResource('overtimes', OvertimeController::class);
         
         Route::get('/transactions', [TransactionController::class, 'index']);
         Route::get('/dashboard-summary', [TransactionController::class, 'dashboardSummary']);
         Route::get('/financial-report', [TransactionController::class, 'financialReport']);
+
+    
     });
 });

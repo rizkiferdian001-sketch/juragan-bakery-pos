@@ -180,7 +180,7 @@ export default function Produk() {
             Kelola Produk & Stok
           </h1>
           <p className="text-sm text-slate-500">
-            Atur katalog kue, foto produk, harga jual, dan stok harian bakery.
+            Katalog kue, foto produk, harga jual, dan stok harian bakery.
           </p>
         </div>
 

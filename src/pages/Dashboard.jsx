@@ -62,7 +62,7 @@ export default function Dashboard() {
           Dashboard Finansial
         </h1>
         <p className="text-sm text-slate-500">
-          Ringkasan omzet penjualan, biaya operasional, dan laba bersih toko.
+          Omzet penjualan, biaya operasional, dan laba bersih toko.
         </p>
       </div>
 
@@ -127,7 +127,7 @@ export default function Dashboard() {
         <div className="p-5 bg-white border rounded-lg border-slate-200 lg:col-span-7">
           <div className="mb-4">
             <h2 className="text-base font-semibold text-slate-900">
-              Pendapatan vs Pengeluaran
+              Pendapatan & Pengeluaran
             </h2>
             <p className="text-xs text-slate-500">
               Perbandingan arus kas 7 hari terakhir
