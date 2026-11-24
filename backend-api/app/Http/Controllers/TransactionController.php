@@ -32,37 +32,42 @@ class TransactionController extends Controller
 
     // Untuk Kasir POS saat Proses Pembayaran (otomatis potong stok)
     public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'nama_pelanggan' => 'nullable|string|max:255',
-            'uang_dibayar' => 'required|integer|min:0',
-            'metode_pembayaran' => 'required|string|max:50',
-            'items' => 'required|array|min:1',
-            'items.*.product_id' => 'required|exists:products,id',
-            'items.*.qty' => 'required|integer|min:1',
-        ]);
+{
+    $validated = $request->validate([
+        'nama_pelanggan' => 'nullable|string|max:255',
+        'uang_dibayar' => 'required|integer|min:0',
+        'metode_pembayaran' => 'required|string|max:50',
+        'items' => 'required|array|min:1',
+        'items.*.product_id' => 'required|exists:products,id',
+        'items.*.qty' => 'required|integer|min:1',
+        'items.*.harga_satuan' => 'nullable|integer|min:0',
+    ]);
 
-        return DB::transaction(function () use ($request, $validated) {
-            $totalHarga = 0;
-            $preparedItems = [];
+    return DB::transaction(function () use ($request, $validated) {
+        $totalHarga = 0;
+        $preparedItems = [];
 
-            foreach ($validated['items'] as $item) {
-                $product = Product::lockForUpdate()->findOrFail($item['product_id']);
+        foreach ($validated['items'] as $item) {
+            $product = Product::lockForUpdate()->findOrFail($item['product_id']);
 
-                if ($product->stok < $item['qty']) {
-                    abort(422, "Stok {$product->nama_produk} tidak mencukupi (tersisa {$product->stok}).");
-                }
-
-                $subtotal = $product->harga * $item['qty'];
-                $totalHarga += $subtotal;
-
-                $preparedItems[] = [
-                    'product' => $product,
-                    'qty' => $item['qty'],
-                    'harga_satuan' => $product->harga,
-                    'subtotal' => $subtotal,
-                ];
+            if ($product->stok < $item['qty']) {
+                abort(422, "Stok {$product->nama_produk} tidak mencukupi (tersisa {$product->stok}).");
             }
+
+            $hargaSatuan = isset($item['harga_satuan'])
+                ? (int) $item['harga_satuan']
+                : (int) $product->harga;
+
+            $subtotal = $hargaSatuan * $item['qty'];
+            $totalHarga += $subtotal;
+
+            $preparedItems[] = [
+                'product' => $product,
+                'qty' => $item['qty'],
+                'harga_satuan' => $hargaSatuan,
+                'subtotal' => $subtotal,
+            ];
+        }
 
             if ($validated['uang_dibayar'] < $totalHarga) {
                 abort(422, 'Uang pembayaran kurang dari total belanja.');

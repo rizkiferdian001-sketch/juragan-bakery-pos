@@ -53,6 +53,19 @@ export default function KasirPOS() {
     }).format(angka || 0);
   };
 
+  const formatTanggalStruk = (tanggalIso) => {
+    const tanggal = tanggalIso ? new Date(tanggalIso) : new Date();
+    if (Number.isNaN(tanggal.getTime())) return "";
+
+    return tanggal.toLocaleString("id-ID", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
   const fetchProducts = async () => {
     try {
       setLoadingProducts(true);
@@ -92,8 +105,25 @@ export default function KasirPOS() {
           item.id === product.id ? { ...item, qty: item.qty + 1 } : item,
         );
       }
-      return [...prevCart, { ...product, qty: 1 }];
+      return [
+        ...prevCart,
+        { ...product, qty: 1, harga_satuan: Number(product.harga) },
+      ];
     });
+  };
+
+  const updateHargaSatuan = (id, nilaiBaru) => {
+    const parsed = Number(nilaiBaru);
+    setCart((prevCart) =>
+      prevCart.map((item) =>
+        item.id === id
+          ? {
+              ...item,
+              harga_satuan: Number.isNaN(parsed) || parsed < 0 ? 0 : parsed,
+            }
+          : item,
+      ),
+    );
   };
 
   const updateQty = (id, delta) => {
@@ -119,7 +149,7 @@ export default function KasirPOS() {
   };
 
   const totalBelanja = cart.reduce(
-    (sum, item) => sum + item.harga * item.qty,
+    (sum, item) => sum + Number(item.harga_satuan ?? item.harga) * item.qty,
     0,
   );
   const kembalian = Number(uangDibayar) - totalBelanja;
@@ -147,6 +177,7 @@ export default function KasirPOS() {
         items: cart.map((item) => ({
           product_id: item.id,
           qty: item.qty,
+          harga_satuan: Number(item.harga_satuan ?? item.harga),
         })),
       };
 
@@ -232,13 +263,13 @@ export default function KasirPOS() {
               />
             </div>
 
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex gap-1.5 pb-1 overflow-x-auto flex-nowrap sm:flex-wrap sm:overflow-visible sm:pb-0">
               {KATEGORI_BAKERY.map((kat) => (
                 <button
                   key={kat}
                   type="button"
                   onClick={() => setSelectedKategori(kat)}
-                  className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors cursor-pointer ${
+                  className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors cursor-pointer shrink-0 ${
                     selectedKategori === kat
                       ? "bg-blue-600 text-white border-blue-600"
                       : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
@@ -340,48 +371,87 @@ export default function KasirPOS() {
                   Klik produk di sebelah kiri untuk menambahkan pesanan.
                 </p>
               ) : (
-                cart.map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex items-center justify-between gap-3 pb-3 border-b border-slate-100 last:border-b-0 last:pb-0"
-                  >
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate text-slate-900">
-                        {item.nama_produk}
-                      </p>
-                      <p className="text-xs text-slate-500">
-                        {formatRupiah(item.harga)} x {item.qty}
-                      </p>
-                    </div>
+                cart.map((item) => {
+                  const hargaAktif = Number(item.harga_satuan ?? item.harga);
+                  const isCustomHarga = hargaAktif !== Number(item.harga);
 
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        type="button"
-                        onClick={() => updateQty(item.id, -1)}
-                        className="p-1 border rounded text-slate-600 border-slate-200 hover:bg-slate-100 cursor-pointer"
-                      >
-                        <Minus className="w-3.5 h-3.5" />
-                      </button>
-                      <span className="w-6 text-xs font-semibold text-center">
-                        {item.qty}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => updateQty(item.id, 1)}
-                        className="p-1 border rounded text-slate-600 border-slate-200 hover:bg-slate-100 cursor-pointer"
-                      >
-                        <Plus className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => removeFromCart(item.id)}
-                        className="p-1 ml-1 text-red-500 rounded hover:bg-red-50 cursor-pointer"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                  return (
+                    <div
+                      key={item.id}
+                      className="flex flex-col gap-2.5 pb-3 border-b border-slate-100 last:border-b-0 last:pb-0"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <p className="text-sm font-medium truncate text-slate-900">
+                              {item.nama_produk}
+                            </p>
+                            {isCustomHarga && (
+                              <span className="px-1.5 py-0.5 text-[10px] font-medium rounded bg-amber-50 text-amber-700 border border-amber-200 shrink-0">
+                                Reseller
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-slate-500">
+                            Subtotal: {formatRupiah(hargaAktif * item.qty)}
+                            {isCustomHarga && (
+                              <span className="ml-1 text-[11px] text-slate-400">
+                                (Normal: {formatRupiah(item.harga)})
+                              </span>
+                            )}
+                          </p>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => removeFromCart(item.id)}
+                          aria-label={`Hapus ${item.nama_produk}`}
+                          className="p-1 text-red-500 rounded hover:bg-red-50 cursor-pointer shrink-0"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-1">
+                          <span className="text-[11px] text-slate-400">Rp</span>
+                          <input
+                            type="number"
+                            min="0"
+                            value={item.harga_satuan ?? item.harga}
+                            onChange={(e) =>
+                              updateHargaSatuan(item.id, e.target.value)
+                            }
+                            aria-label={`Harga satuan ${item.nama_produk}`}
+                            className="w-24 px-2 py-1 text-xs font-semibold text-right bg-white border rounded sm:w-28 border-slate-300 focus:outline-none focus:border-blue-600"
+                          />
+                        </div>
+
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => updateQty(item.id, -1)}
+                            aria-label={`Kurangi jumlah ${item.nama_produk}`}
+                            className="p-1 border rounded text-slate-600 border-slate-200 hover:bg-slate-100 cursor-pointer"
+                          >
+                            <Minus className="w-3.5 h-3.5" />
+                          </button>
+                          <span className="w-6 text-xs font-semibold text-center">
+                            {item.qty}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => updateQty(item.id, 1)}
+                            aria-label={`Tambah jumlah ${item.nama_produk}`}
+                            className="p-1 border rounded text-slate-600 border-slate-200 hover:bg-slate-100 cursor-pointer"
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
 
@@ -509,6 +579,9 @@ export default function KasirPOS() {
                 <p className="text-xs text-slate-500">
                   {receiptData.kode_invoice}
                 </p>
+                <p className="text-[11px] text-slate-400">
+                  {formatTanggalStruk(receiptData.created_at)}
+                </p>
                 <p className="mt-1 text-xs text-slate-500">
                   Pelanggan: {receiptData.nama_pelanggan}
                 </p>
@@ -536,6 +609,16 @@ export default function KasirPOS() {
               </div>
 
               <div className="space-y-1 text-xs">
+                <div className="flex justify-between text-slate-500">
+                  <span>Total Item</span>
+                  <span>
+                    {receiptData.items?.reduce(
+                      (sum, item) => sum + Number(item.qty || 0),
+                      0,
+                    ) || 0}{" "}
+                    pcs
+                  </span>
+                </div>
                 <div className="flex justify-between font-semibold text-slate-900">
                   <span>Total</span>
                   <span>{formatRupiah(receiptData.total_harga)}</span>
